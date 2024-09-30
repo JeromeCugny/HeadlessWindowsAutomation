@@ -1,0 +1,7 @@
+set GENERATE_OPTIONS= -G "Visual Studio 17 2022" -A x64
+set GENERATE_PROJECT_NAME=.build-x64
+
+cd %~dp0
+mkdir %GENERATE_PROJECT_NAME%
+cd %GENERATE_PROJECT_NAME%
+call cmake %GENERATE_OPTIONS% "%~dp0"

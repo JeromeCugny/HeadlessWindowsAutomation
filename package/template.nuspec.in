@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>@NUGET_PACKAGE_NAME@</id>
+    <version>@NUGET_PACKAGE_VERSION@</version>
+    <authors>Jerome Cugny</authors>
+    <description>A library for headless Windows automation of desktop applications.</description>
+    <tags>Windows automation headless test testing window desktop library messages</tags>
+    <license type="expression">MIT</license>
+    <readme>docs/readme.md</readme>
+    <repository type="git" url="https://github.com/JeromeCugny/HeadlessWindowsAutomation.git" />
+    <dependencies>
+      <group targetFramework="@DOTNET_TARGET_FRAMEWORK@">
+      </group>
+    </dependencies>
+    <frameworkAssemblies>
+    <frameworkAssembly assemblyName="System" />
+    <frameworkAssembly assemblyName="System.Core" />
+    <frameworkAssembly assemblyName="System.Windows.Forms" />
+    <frameworkAssembly assemblyName="UIAutomationClient" />
+    <frameworkAssembly assemblyName="UIAutomationTypes" />
+    <frameworkAssembly assemblyName="WindowsBase" />
+    <frameworkAssembly assemblyName="System.Diagnostics" />
+    <frameworkAssembly assemblyName="System.Text.RegularExpressions" />
+</frameworkAssemblies>
+  </metadata>
+  <files>
+    <file src="@LIB_PATH@/@NUGET_PACKAGE_NAME@.dll" target="lib/@DOTNET_TARGET_FRAMEWORK@" />
+    <file src="@LIB_PATH@/@NUGET_PACKAGE_NAME@.pdb" target="lib/@DOTNET_TARGET_FRAMEWORK@" />
+    <file src="@SOURCE_PATH@/readme.md" target="docs" />
+  </files>
+</package>
