@@ -24,6 +24,15 @@ To build the project, follow these steps:
     cmake --build build --config Release --target ALL_BUILD
     ```
 
+## Publish the Package
+
+The nuget package is available in the `.output` folder.
+- Manual at https://www.nuget.org/packages/manage/upload
+- By command line
+  ```sh
+  nuget push HeadlessWindowsAutomation.<version>.nupkg -Source https://api.nuget.org/v3/index.json -ApiKey <your-api-key>
+  ```
+
 ## Additional Information
 
 For more details about the package, refer to the [package readme](package/readme.md).
