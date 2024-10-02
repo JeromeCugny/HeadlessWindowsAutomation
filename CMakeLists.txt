@@ -9,6 +9,8 @@ project("HeadlessWindowsAutomation"
 set(DOTNET_VERSION "v4.8")  # Version for Visual Studio
 set(DOTNET_TARGET_FRAMEWORK "net48")  # (same) version but for nuget package
 
+set(NUGET_PACKAGE_VERSION "1.0.0")
+
 # Define the output path for the build
 set(OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 

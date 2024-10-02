@@ -1,6 +1,5 @@
 # NuGet packaging
 set(NUGET_PACKAGE_NAME "${PROJECT_NAME}")
-set(NUGET_PACKAGE_VERSION "1.0.0")
 
 # Generate the .nuspec file at build time
 set(NUSPEC_FILE "${CMAKE_BINARY_DIR}/${NUGET_PACKAGE_NAME}.nuspec")

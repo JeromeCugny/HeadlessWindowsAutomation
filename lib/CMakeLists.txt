@@ -3,6 +3,10 @@ project(HeadlessWindowsAutomation LANGUAGES CSharp)
 # Add the source files
 file(GLOB_RECURSE SOURCES "src/*.cs")
 
+# Configure the AssemblyInfo.cs file
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs.in ${CMAKE_CURRENT_BINARY_DIR}/AssemblyInfo.cs @ONLY)
+list(APPEND SOURCES ${CMAKE_CURRENT_BINARY_DIR}/AssemblyInfo.cs)
+
 # Add the library target
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 

@@ -1,0 +1,15 @@
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
+[assembly: AssemblyTitle("@PROJECT_NAME@")]
+[assembly: AssemblyDescription("A library for headless Windows automation of desktop applications.")]
+[assembly: AssemblyConfiguration("")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("@PROJECT_NAME@")]
+[assembly: AssemblyCopyright("Copyright © 2024")]
+[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCulture("")]
+[assembly: ComVisible(false)]
+[assembly: AssemblyVersion("@NUGET_PACKAGE_VERSION@")]
+[assembly: AssemblyFileVersion("@NUGET_PACKAGE_VERSION@")]
