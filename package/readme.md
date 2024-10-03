@@ -8,11 +8,15 @@ Consider using `Indirect display driver` (such as [Virtual Display Driver](https
 
 # Key features
 - **AutomationElementWrapper**: Main class, provide automation functionalities.
-  - find element(s) using the AutomationElement APIs or XPath.
+  - find element(s) using the AutomationElement APIs or **XPath**.  
+    The find **auto-waits** for the element! You don't need to force a wait.  
+    That behavior is configurable using the `.Config` property.
   - interact with them (`Click`, `SetText`, `Keyboard` sub-class, etc.).  
     In the end, everything will be send as `message` using the `window handle`. 
     So it's better to interact with a component **with a handle**, if you don't have one then use the `ClickOnLocation`.  
-    Note that the `Keyboard` might not be compatible with headless, depending on your environment.
+    On Windows, you can interact with components using messages even if they are **not visible**.  
+    Hence why **HeadlessWindowsAutomation** allows actual headless on a desktop application!  
+    Note that the `Keyboard` might not be compatible with headless, depending on your environment.  
 - **WindowsAPIHelper**: low level utilities function around Windows APIs.  
   You most likely won't use it unless you need to find elements not under your application. Like an owned top-level window.
 - **ProcessHelper**: utility methods for managing and interacting with processes.  

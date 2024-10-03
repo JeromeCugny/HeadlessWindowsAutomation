@@ -5,7 +5,7 @@
     <version>@NUGET_PACKAGE_VERSION@</version>
     <authors>Jerome Cugny</authors>
     <description>A library for headless Windows automation of desktop applications.</description>
-    <tags>Windows automation headless test testing window desktop library messages</tags>
+    <tags>Windows automation headless test testing window desktop desktop-application library xpath auto-wait messages</tags>
     <license type="expression">MIT</license>
     <readme>docs/readme.md</readme>
     <repository type="git" url="https://github.com/JeromeCugny/HeadlessWindowsAutomation.git" />
