@@ -20,7 +20,6 @@
     <frameworkAssembly assemblyName="UIAutomationClient" />
     <frameworkAssembly assemblyName="UIAutomationTypes" />
     <frameworkAssembly assemblyName="WindowsBase" />
-    <frameworkAssembly assemblyName="System.Diagnostics" />
     <frameworkAssembly assemblyName="System.Text.RegularExpressions" />
 </frameworkAssemblies>
   </metadata>

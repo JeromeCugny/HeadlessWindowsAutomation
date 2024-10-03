@@ -8,7 +8,7 @@ namespace HeadlessWindowsAutomation
     /// <summary>
     /// Provides utility methods for managing and interacting with processes.
     /// </summary>
-    class ProcessHelper
+    public class ProcessHelper
     {
         /// <summary>
         /// Optional. Function called when checking the validity of a process in the context of "GetApplicationProcessIdFromParent".
