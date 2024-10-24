@@ -21,7 +21,7 @@ To build the project, follow these steps:
     ```
 2. Build the project:
     ```sh
-    cmake --build build --config Release --target ALL_BUILD
+    cmake --build ./.build-x64 --config RelWithDebInfo --target ALL_BUILD
     ```
 
 ## Publish the Package
