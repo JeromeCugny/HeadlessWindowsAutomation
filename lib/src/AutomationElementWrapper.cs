@@ -707,15 +707,34 @@ namespace HeadlessWindowsAutomation
 
             // The found (leaf) element must respect the path
             // Depth-First Search using FindElements to match each node of the path
-            AutomationElementWrapper startingElement = isRelativeSearch ? this : GetMainWindow();
+            AutomationElementWrapper startingElement = isRelativeSearch ? this : (this.Config.SearchInAllTopWindows ? null : GetMainWindow());
             AutomationElementWrapper result = null;
-            if (this.Config.FindWaitForElement) result = this.RetryFindElement(() => {
-                return FindElementByXPathRecursive(startingElement, nodes, 0);
+            if (this.Config.FindWaitForElement) result = this.RetryFindElement(() =>
+            {
+                if (this.Config.SearchInAllTopWindows) return this.ExecuteFindFromTopLevels(nodes);
+                else return FindElementByXPathRecursive(startingElement, nodes, 0);
             });
-            else result = FindElementByXPathRecursive(startingElement, nodes, 0);
+            else 
+            {
+                if (this.Config.SearchInAllTopWindows) result = this.ExecuteFindFromTopLevels(nodes);
+                else result = FindElementByXPathRecursive(startingElement, nodes, 0);
+            }
 
             if (result == null && this.Config.ShowError) Console.Error.WriteLine($"Element not found using expression {xpathExpr} inside {this}");
             return result;
+        }
+
+        private AutomationElementWrapper ExecuteFindFromTopLevels((TreeScope scope, string node)[] nodes)
+        {
+            AutomationElementWrapper found = null;
+
+            WindowsAPIHelper.VisitTopWindows((AutomationElement element) => {
+                AutomationElementWrapper wrapper = new AutomationElementWrapper(element);
+                found = this.FindElementByXPathRecursive(wrapper, nodes, 0);
+                return found == null;
+            });
+
+            return found;
         }
 
         /// <summary>
@@ -1057,33 +1076,46 @@ namespace HeadlessWindowsAutomation
         }
 
         /// <summary>
-        /// Finds an owned window owned by the current Window Handle that matches the specified condition.
+        /// Finds an element owned by the current Window Handle that matches the specified conditions.
         /// </summary>
-        /// <param name="condition">The XPath condition to match the owned window.</param>
-        /// <returns>An <see cref="AutomationElementWrapper"/> for the owned window if found; otherwise, null.</returns>
-        public AutomationElementWrapper FindOwnedWindow(string condition)
+        /// <param name="rootCondition">The XPath condition to match the owned window.</param>
+        /// <param name="subExpr">Optional. The XPath to match the sub-element inside the given owned window.</param>
+        /// <returns>An <see cref="AutomationElementWrapper"/> for the owned element if found; otherwise, null.</returns>
+        public AutomationElementWrapper FindOwnedElement(string rootCondition, string subExpr = "")
         {
             AutomationElementWrapper Aux()
             {
-                Window wnd = new Window(this.GetHwnd());
-                List<IntPtr> ownedWindows = wnd.GetOwnedWindows();
-                foreach (IntPtr owned in ownedWindows)
-                {
-                    AutomationElement element = WindowsAPIHelper.GetAutomationElement(owned);
-                    if (element != null)
+                AutomationElementWrapper found = null;
+                WindowsAPIHelper.VisitTopWindows((AutomationElement element) => {
+                    AutomationElementWrapper wrapper = new AutomationElementWrapper(element);
+                    wrapper.Config.ShowError = false;
+                    wrapper.Config.FindWaitForElement = false;
+
+                    var rootMatches = wrapper.FindElement(rootCondition, TreeScope.Element);  // Check self
+                    if (rootMatches != null)
                     {
-                        AutomationElementWrapper wrapper = new AutomationElementWrapper(element);
-                        wrapper.Config.ShowError = false;
-                        wrapper.Config.FindWaitForElement = false;
-                        var found = wrapper.FindElement(condition, TreeScope.Element);
-                        if (found != null)
+                        // We've found a matching top level owned window
+                        if (String.IsNullOrEmpty(subExpr))
                         {
                             wrapper.Config.CopyFrom(this.Config);
-                            return wrapper;
+                            found = wrapper;
+                            return false;
+                        }
+                        else
+                        {
+                            // Check for sub element with xpath
+                            var subElement = wrapper.FindElementByXPath(subExpr);
+                            if (subElement != null)
+                            {
+                                subElement.Config.CopyFrom(this.Config);
+                                found = subElement;
+                                return false;
+                            }
                         }
                     }
-                }
-                return null;
+                    return true;
+                });
+                return found;
             }
 
             AutomationElementWrapper result = null;
@@ -1092,7 +1124,7 @@ namespace HeadlessWindowsAutomation
             });
             else result = Aux();
 
-            if (result == null && this.Config.ShowError) Console.Error.WriteLine($"Owned window not found with {condition} with owner {this}");
+            if (result == null && this.Config.ShowError) Console.Error.WriteLine($"Owned element not found with {rootCondition} and {subExpr} with owner {this}");
             return result;
         }
 
@@ -1397,6 +1429,12 @@ namespace HeadlessWindowsAutomation
         public bool ForceChildrenWindows { get; set; } = false;
 
         /// <summary>
+        /// Gets or sets a value indicating whether to execute the <see cref="AutomationElementWrapper.FindElementByXPath"/> using all the top level windows.
+        /// This option is only available for non-relative search. Note that the find will be significantly slower.
+        /// </summary>
+        public bool SearchInAllTopWindows { get; set; } = false;
+
+        /// <summary>
         /// Copies the configuration settings from another <see cref="Config"/> instance.
         /// </summary>
         /// <param name="other">The other <see cref="Config"/> instance to copy from.</param>
@@ -1406,6 +1444,7 @@ namespace HeadlessWindowsAutomation
             this.FindWaitForElement = other.FindWaitForElement;
             this.WaitTimeoutMS = other.WaitTimeoutMS;
             this.ForceChildrenWindows = other.ForceChildrenWindows;
+            this.SearchInAllTopWindows = other.SearchInAllTopWindows;
         }
 
         /// <summary>
@@ -1419,7 +1458,8 @@ namespace HeadlessWindowsAutomation
                 ShowError = this.ShowError,
                 FindWaitForElement = this.FindWaitForElement,
                 WaitTimeoutMS = this.WaitTimeoutMS,
-                ForceChildrenWindows = this.ForceChildrenWindows
+                ForceChildrenWindows = this.ForceChildrenWindows,
+                SearchInAllTopWindows = this.SearchInAllTopWindows
             };
         }
     }
