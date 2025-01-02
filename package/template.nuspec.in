@@ -21,6 +21,7 @@
     <frameworkAssembly assemblyName="UIAutomationTypes" />
     <frameworkAssembly assemblyName="WindowsBase" />
     <frameworkAssembly assemblyName="System.Text.RegularExpressions" />
+    <frameworkAssembly assemblyName="System.Drawing" />
 </frameworkAssemblies>
   </metadata>
   <files>

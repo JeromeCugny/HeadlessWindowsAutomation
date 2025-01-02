@@ -1155,6 +1155,22 @@ namespace HeadlessWindowsAutomation
             if (result == null && config.ShowError) Console.Error.WriteLine($"Top level window not found with {condition}");
             return result;
         }
+
+        /// <summary>
+        /// Retrieves the background color of the associated automation element.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="System.Drawing.Color"/> structure that represents the background color of the associated automation element.
+        /// Returns <see cref="System.Drawing.Color.Empty"/> upon errors.
+        /// </returns>
+        /// <remarks>
+        /// This method uses the <see cref="WindowsAPIHelper.GetBackgroundColor"/> method to retrieve the background color
+        /// of the window associated with the automation element.
+        /// </remarks>
+        public System.Drawing.Color GetBackgroundColor()
+        {
+            return WindowsAPIHelper.GetBackgroundColor(this.GetHwnd());
+        }
     }
 
     /// <summary>

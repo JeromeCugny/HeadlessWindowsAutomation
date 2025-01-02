@@ -29,4 +29,5 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DOTNET_REFERENCES
     "WindowsBase"
     "System.Diagnostics"
     "System.Text.RegularExpressions"
+    "System.Drawing"
 )

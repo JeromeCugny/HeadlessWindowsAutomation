@@ -234,6 +234,57 @@ namespace HeadlessWindowsAutomation
                 // missing BREAK (Keys.ControlKey + Keys.Pause) key, useless, and would need to check Keys[]
         }
 
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern IntPtr GetDC(IntPtr hWnd);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern int ReleaseDC(IntPtr hWnd, IntPtr hDC);
+
+        [DllImport("gdi32.dll", SetLastError = true)]
+        static extern uint GetBkColor(IntPtr hdc);
+
+        /// <summary>
+        /// Retrieves the background color of the specified window.
+        /// </summary>
+        /// <param name="hWnd">A handle to the window whose background color is to be retrieved.</param>
+        /// <returns>
+        /// A <see cref="System.Drawing.Color"/> structure that represents the background color of the specified window.
+        /// Returns <see cref="System.Drawing.Color.Empty"/> if the window handle is invalid, 
+        /// the device context cannot be retrieved, or the background color cannot be determined.
+        /// </returns>
+        /// <remarks>
+        /// This method uses the GetDC and GetBkColor functions from the Windows API to retrieve the background color.
+        /// If any step in the process fails, an error message is printed to <see cref="System.Console.Error"/> and 
+        /// <see cref="System.Drawing.Color.Empty"/> is returned.
+        /// </remarks>
+        public static System.Drawing.Color GetBackgroundColor(IntPtr hWnd)
+        {
+            if (hWnd != IntPtr.Zero)    // We don't want to use the DC for the whole screen
+            {
+                IntPtr hdc = GetDC(hWnd);
+                if (hdc != IntPtr.Zero)
+                {
+                    uint colorRef = GetBkColor(hdc);
+                    ReleaseDC(hWnd, hdc);
+
+                    if (colorRef != 0xFFFFFFFF) // CLR_INVALID
+                    {
+                        // Extract RGB values from colorRef
+                        int r = (int)(colorRef & 0x000000FF);
+                        int g = (int)((colorRef & 0x0000FF00) >> 8);
+                        int b = (int)((colorRef & 0x00FF0000) >> 16);
+
+                        return System.Drawing.Color.FromArgb(r, g, b);
+                    }
+                    else Console.Error.WriteLine("Failed to get background color.");
+                }
+                else Console.Error.WriteLine("Failed to get device context.");
+            }
+            else Console.Error.WriteLine("Window handle cannot be null.");
+
+            return System.Drawing.Color.Empty;
+        }
+
         // Messages (non exhaustive)
         // Window Messages
         public const uint WM_SETFOCUS = 0x0007; // Sent to a window after it has gained the keyboard focus.
