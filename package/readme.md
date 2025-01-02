@@ -45,9 +45,6 @@ Process myapp = Process.GetProcessById(myapp_pid);
 
 // Set the root/main AutomationElementWrapper on myapp
 var mainWindow = new AutomationElementWrapper(myapp.MainWindowHandle);
-AutomationElementWrapper.MainWindowCallback = () => {
-    return mainWindow;
-};
 
 // Automate your app
 ...

@@ -35,28 +35,25 @@ namespace HeadlessWindowsAutomation
         public readonly Config Config = new Config();
 
         /// <summary>
-        /// Delegate for the callback function to get the main window.
+        /// An <see cref="AutomationElementWrapper"/> representing the root window.
         /// </summary>
-        /// <returns>An <see cref="AutomationElementWrapper"/> representing the main window.</returns>
-        public delegate AutomationElementWrapper GetMainWindowCallback();
+        public AutomationElementWrapper RootWindow { get; set; }
 
         /// <summary>
-        /// Static property to hold the callback function for getting the main window.
-        /// </summary>
-        public static GetMainWindowCallback MainWindowCallback { get; set; }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AutomationElementWrapper"/> class with the specified <see cref="AutomationElement"/>.
+        /// Initializes a new instance of the <see cref="AutomationElementWrapper"/> class with the specified <see cref="AutomationElement"/>.  
+        /// The <see cref="AutomationElementWrapper.RootWindow" /> is the new instance.
         /// </summary>
         /// <param name="element">The <see cref="AutomationElement"/> to wrap.</param>
         public AutomationElementWrapper(AutomationElement element)
         {
             this.Keyboard = new Keyboard(this);
             this.Element = element;
+            this.RootWindow = this;
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AutomationElementWrapper"/> class with the specified window handle.
+        /// The <see cref="AutomationElementWrapper.RootWindow" /> is the new instance.
         /// </summary>
         /// <param name="hwnd">The window handle.</param>
         /// <exception cref="ArgumentException">Thrown when the <see cref="AutomationElement"/> is not found for the given handle.</exception>
@@ -65,6 +62,7 @@ namespace HeadlessWindowsAutomation
             this.Element = WindowsAPIHelper.GetAutomationElement(hwnd);
             if (this.Element == null) throw new ArgumentException($"AutomationElement not found, invalid handle {hwnd}");
             this.Keyboard = new Keyboard(this);
+            this.RootWindow = this;
         }
 
         /// <summary>
@@ -76,6 +74,7 @@ namespace HeadlessWindowsAutomation
         {
             this.Parent = parent;
             this.Config.CopyFrom(parent.Config);
+            this.RootWindow = parent.RootWindow;
         }
 
         /// <summary>
@@ -707,7 +706,7 @@ namespace HeadlessWindowsAutomation
 
             // The found (leaf) element must respect the path
             // Depth-First Search using FindElements to match each node of the path
-            AutomationElementWrapper startingElement = isRelativeSearch ? this : (this.Config.SearchInAllTopWindows ? null : GetMainWindow());
+            AutomationElementWrapper startingElement = isRelativeSearch ? this : (this.Config.SearchInAllTopWindows ? null : this.RootWindow);
             AutomationElementWrapper result = null;
             if (this.Config.FindWaitForElement) result = this.RetryFindElement(() =>
             {
@@ -746,6 +745,8 @@ namespace HeadlessWindowsAutomation
         /// <returns>The found <see cref="AutomationElementWrapper"/>. All required instances will be created according to the path.</returns>
         private AutomationElementWrapper FindElementByXPathRecursive(AutomationElementWrapper currentElement, (TreeScope scope, string node)[] nodes, int index)
         {
+            if (currentElement == null) return null;
+
             var savedConfig = this.Config.Clone();
             currentElement.Config.ShowError = false;    // don't display/throw error
             currentElement.Config.FindWaitForElement = false;   // don't retry
@@ -1059,20 +1060,6 @@ namespace HeadlessWindowsAutomation
             }
             if (this.Config.ShowError) Console.Error.WriteLine($"Failed to find the Element during {this.Config.WaitTimeoutMS} ms");
             return default(T);
-        }
-
-        /// <summary>
-        /// Method to get the main window using the callback.
-        /// </summary>
-        /// <returns>The main window</returns>
-        public static AutomationElementWrapper GetMainWindow()
-        {
-            if (MainWindowCallback == null)
-            {
-                throw new InvalidOperationException("MainWindowCallback is not set");
-            }
-
-            return MainWindowCallback();
         }
 
         /// <summary>
