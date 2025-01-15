@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
@@ -1170,6 +1171,48 @@ namespace HeadlessWindowsAutomation
         public System.Drawing.Color GetBackgroundColor()
         {
             return WindowsAPIHelper.GetBackgroundColor(this.GetHwnd());
+        }
+
+        /// <summary>
+        /// Takes a screenshot of the current window and saves it to the specified file path.
+        /// </summary>
+        /// <param name="filePath">The file path to save the screenshot.</param>
+        /// <param name="format">The format of the image.</param>
+        public void TakeScreenshot(string filePath, ImageFormat format)
+        {
+            IntPtr hWnd = this.GetHwnd();
+            if (hWnd == IntPtr.Zero)
+            {
+                if (this.Config.ShowError) Console.Error.WriteLine("Cannot take screenshot, window handle is not defined.");
+                return;
+            }
+
+            WindowsAPIHelper.RECT rect;
+            if (!WindowsAPIHelper.GetWindowRect(hWnd, out rect))
+            {
+                if (this.Config.ShowError) Console.Error.WriteLine("Failed to get window rectangle.");
+                return;
+            }
+
+            int width = rect.Right - rect.Left;
+            int height = rect.Bottom - rect.Top;
+
+            using (System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(width, height, PixelFormat.Format32bppArgb))
+            {
+                using (System.Drawing.Graphics graphics = System.Drawing.Graphics.FromImage(bitmap))
+                {
+                    IntPtr hdcBitmap = graphics.GetHdc();
+                    IntPtr hdcWindow = WindowsAPIHelper.GetWindowDC(hWnd);
+
+                    WindowsAPIHelper.BitBlt(hdcBitmap, 0, 0, width, height, hdcWindow, 0, 0, WindowsAPIHelper.SRCCOPY);
+
+                    graphics.ReleaseHdc(hdcBitmap);
+                    WindowsAPIHelper.ReleaseDC(hWnd, hdcWindow);
+                }
+
+                bitmap.Save(filePath, format);
+            }
+            Console.WriteLine($"Screenshot saved at '{filePath}'");
         }
     }
 

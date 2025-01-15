@@ -17,6 +17,7 @@ Consider using `Indirect display driver` (such as [Virtual Display Driver](https
     On Windows, you can interact with components using messages even if they are **not visible**.  
     Hence why **HeadlessWindowsAutomation** allows actual headless on a desktop application!  
     Note that the `Keyboard` might not be compatible with headless, depending on your environment.  
+  - Take a screenshot to easily diagnose an error, especially useful for automated testing.    
 - **WindowsAPIHelper**: low level utilities function around Windows APIs.  
   You most likely won't use it unless you need to find elements not under your application. Like an owned top-level window.
 - **ProcessHelper**: utility methods for managing and interacting with processes.  
@@ -64,4 +65,21 @@ subPane.PrintAllChildren();
 
 AutomationElementWrapper searchBtn = subPane.FindElementByXPath("./Button[@Name='Search']")
   .Click();
+```
+
+### Take a screenshot
+Whenever you encounter an error (like in a `try ... catch`) we recommend you to take a screenshot.  
+When calling the method `TakeScreenshot`, you need to name the file properly.  
+Example of implementation assuming you are using **NUnit**:
+```C#
+public void TakeScreenshot([System.Runtime.CompilerServices.CallerMemberName] string caller = "")
+{
+  if (mainWindow != null)
+  {
+    string workDir = NUnit.Framework.TestContext.CurrentContext.WorkDirectory;
+    DateTime dateTime = DateTime.Now;
+    string screenshotName = $"{caller}_{dateTime.Hour}h{dateTime.Minute}min{dateTime.Second}s{dateTime.Millisecond}ms.png";
+    mainWindow.TakeScreenshot(Path.Combine(workDir, screenshotName), ImageFormat.Png);
+  }
+}
 ```
