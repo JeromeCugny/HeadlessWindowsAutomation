@@ -79,7 +79,9 @@ public void TakeScreenshot([System.Runtime.CompilerServices.CallerMemberName] st
     string workDir = NUnit.Framework.TestContext.CurrentContext.WorkDirectory;
     DateTime dateTime = DateTime.Now;
     string screenshotName = $"{caller}_{dateTime.Hour}h{dateTime.Minute}min{dateTime.Second}s{dateTime.Millisecond}ms.png";
-    mainWindow.TakeScreenshot(Path.Combine(workDir, screenshotName), ImageFormat.Png);
+    string screenshotPath = Path.Combine(workDir, screenshotName);
+    mainWindow.TakeScreenshot(screenshotPath, ImageFormat.Png);
+    NUnit.Framework.TestContext.AddTestAttachment(screenshotPath);
   }
 }
 ```
