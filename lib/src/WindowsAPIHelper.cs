@@ -237,8 +237,19 @@ namespace HeadlessWindowsAutomation
         [DllImport("user32.dll", SetLastError = true)]
         static extern IntPtr GetDC(IntPtr hWnd);
 
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetWindowDC(IntPtr hWnd);
+
         [DllImport("user32.dll", SetLastError = true)]
-        static extern int ReleaseDC(IntPtr hWnd, IntPtr hDC);
+        public static extern int ReleaseDC(IntPtr hWnd, IntPtr hDC);
+
+        [DllImport("gdi32.dll")]
+        public static extern bool BitBlt(IntPtr hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, IntPtr hdcSrc, int nXSrc, int nYSrc, int dwRop);
+
+        [DllImport("user32.dll")]
+        public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+        public const int SRCCOPY = 0x00CC0020;
 
         [DllImport("gdi32.dll", SetLastError = true)]
         static extern uint GetBkColor(IntPtr hdc);
@@ -283,6 +294,15 @@ namespace HeadlessWindowsAutomation
             else Console.Error.WriteLine("Window handle cannot be null.");
 
             return System.Drawing.Color.Empty;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RECT
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
         }
 
         // Messages (non exhaustive)
