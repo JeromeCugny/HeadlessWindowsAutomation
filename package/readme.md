@@ -17,7 +17,8 @@ Consider using `Indirect display driver` (such as [Virtual Display Driver](https
     On Windows, you can interact with components using messages even if they are **not visible**.  
     Hence why **HeadlessWindowsAutomation** allows actual headless on a desktop application!  
     Note that the `Keyboard` might not be compatible with headless, depending on your environment.  
-  - Take a screenshot to easily diagnose an error, especially useful for automated testing.    
+  - Take a screenshot to easily diagnose an error, especially useful for automated testing.  
+  - find element(s) also supports **Regex** inside the conditions! 
 - **WindowsAPIHelper**: low level utilities function around Windows APIs.  
   You most likely won't use it unless you need to find elements not under your application. Like an owned top-level window.
 - **ProcessHelper**: utility methods for managing and interacting with processes.  
@@ -65,6 +66,9 @@ subPane.PrintAllChildren();
 
 AutomationElementWrapper searchBtn = subPane.FindElementByXPath("./Button[@Name='Search']")
   .Click();
+
+subPane.Config.UseRegex = true;
+AutomationElementWrapper someComponent = subPane.FindElementByXPath("./Text[@Name='/some.*/i']");
 ```
 
 ### Take a screenshot
