@@ -582,7 +582,7 @@ namespace HeadlessWindowsAutomation
                 if (!ListContainsElement(found, element))
                 {
                     AutomationElementFinder hiddenFinder = new AutomationElementFinder(element);
-                    var descendants = finder.FindAll(scope, condition);
+                    var descendants = hiddenFinder.FindAll(scope, condition);
                     this.MergeLists(ref found, descendants);
                 }
             }
