@@ -694,7 +694,7 @@ namespace HeadlessWindowsAutomation
             // If xpathExpr starts with . then we search from this else from root
             bool isRelativeSearch = xpathExpr.StartsWith(".");
             // Split the rest by path / (immediate child, Children scope) or // (anywhere, Descendants scope)
-            var matches = Regex.Matches(xpathExpr, @"(/{1,2})([^/]+)");
+            var matches = Regex.Matches(xpathExpr, @"(/{1,2})([^\[\]/]+(\[[^\]]*\])?)");
             (TreeScope scope, string node)[] nodes = matches.Cast<Match>().Select(match =>
             {
                 string delimiter = match.Groups[1].Value;
