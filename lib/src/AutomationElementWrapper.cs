@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing.Imaging;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -388,22 +389,16 @@ namespace HeadlessWindowsAutomation
         /// <returns>The found <see cref="AutomationElementWrapper"/> as a child of the current instance.</returns>
         public AutomationElementWrapper FindElement(AutomationProperty property, object value, TreeScope scope = TreeScope.Children)
         {
-            Condition condition = new PropertyCondition(property, value);
+            ICustomCondition condition = this.CreateCustomPropertyCondition(property, value);
             AutomationElement found = null;
+            AutomationElementFinder finder = new AutomationElementFinder(this.Element);
             if (this.Config.FindWaitForElement) found = this.RetryFindElement(() =>
             {
-                return this.Element.FindFirst(scope, condition);
+                return finder.FindFirst(scope, condition);
             });
             else
             {
-                try
-                {
-                    found = this.Element.FindFirst(scope, condition);
-                }
-                catch (Exception e) 
-                {
-                    found = null;
-                }
+                found = finder.FindFirst(scope, condition);
             }
 
             if (found != null) return new AutomationElementWrapper(found, this);
@@ -412,6 +407,20 @@ namespace HeadlessWindowsAutomation
                 if (this.Config.ShowError) Console.Error.WriteLine($"Failed to find the AutomationElement using {property.ProgrammaticName} = {value} inside {this}");
                 return null;
             }
+        }
+
+        private ICustomCondition CreateCustomPropertyCondition(AutomationProperty property, object value)
+        {
+            if (this.Config.UseRegex && value is string stringValue)
+            {
+                var regexStringParser = new CustomPropertyRegexCondition.RegexStringParser(stringValue);
+                if (regexStringParser.Parse())
+                {
+                    return new CustomPropertyRegexCondition(property, regexStringParser.Pattern, regexStringParser.Options);
+                }
+            }
+
+            return new CustomPropertyCondition(property, value);
         }
 
         /// <summary>
@@ -425,29 +434,23 @@ namespace HeadlessWindowsAutomation
             if (propertyConditions.Count <= 0) throw new ArgumentException("Invalid condition.", nameof(propertyConditions));
             if (propertyConditions.Count == 1) return this.FindElement(propertyConditions.First().Key, propertyConditions.First().Value, scope);
 
-            List<Condition> conditions = new List<Condition>();
+            List<ICustomCondition> conditions = new List<ICustomCondition>();
 
             foreach (var propertyCondition in propertyConditions)
             {
-                conditions.Add(new PropertyCondition(propertyCondition.Key, propertyCondition.Value));
+                conditions.Add(this.CreateCustomPropertyCondition(propertyCondition.Key, propertyCondition.Value));
             }
 
-            Condition combinedCondition = new AndCondition(conditions.ToArray());
+            var combinedCondition = new CustomAndCondition(conditions.ToArray());
             AutomationElement found = null;
+            AutomationElementFinder finder = new AutomationElementFinder(this.Element);
             if (this.Config.FindWaitForElement) found = this.RetryFindElement(() =>
             {
-                return this.Element.FindFirst(scope, combinedCondition);
+                return finder.FindFirst(scope, combinedCondition);
             });
             else
             {
-                try
-                {
-                    found = this.Element.FindFirst(scope, combinedCondition);
-                } 
-                catch (Exception e) 
-                {
-                    found = null;
-                }
+                found = finder.FindFirst(scope, combinedCondition);
             }
 
             if (found != null) return new AutomationElementWrapper(found, this);
@@ -565,30 +568,26 @@ namespace HeadlessWindowsAutomation
         /// </summary>
         /// <param name="parent">The parent <see cref="AutomationElement"/>.</param>
         /// <param name="scope">The <see cref="TreeScope"/> to search within.</param>
-        /// <param name="condition">The <see cref="Condition"/> to match.</param>
+        /// <param name="condition">The <see cref="ICustomCondition"/> to match.</param>
         /// <returns>A list of <see cref="AutomationElement"/> that match the condition.</returns>
-        protected List<AutomationElement> FindAllWithHidden(AutomationElement parent, TreeScope scope, Condition condition)
+        internal List<AutomationElement> FindAllWithHidden(AutomationElement parent, TreeScope scope, ICustomCondition condition)
         {
-            try
-            {
-                AutomationElementCollection found = parent.FindAll(scope, condition);
-                List<AutomationElement> result = this.AutomationCollectionToList(found);
-                var childrenWindows = this.GetChildrenWindows(parent, scope == TreeScope.Children); // hidden
-                foreach (AutomationElement element in childrenWindows)
-                {
-                    if (!ListContainsElement(result, element))
-                    {
-                        var descendants = element.FindAll(scope, condition);
-                        this.MergeLists(ref result, descendants);
-                    }
-                }
+            AutomationElementFinder finder = new AutomationElementFinder(parent);
+            List<AutomationElement> found = finder.FindAll(scope, condition);
 
-                return result;
-            }
-            catch (Exception e) 
+            // Hidden
+            var childrenWindows = this.GetChildrenWindows(parent, scope == TreeScope.Children);
+            foreach (AutomationElement element in childrenWindows)
             {
-                return new List<AutomationElement>();
+                if (!ListContainsElement(found, element))
+                {
+                    AutomationElementFinder hiddenFinder = new AutomationElementFinder(element);
+                    var descendants = finder.FindAll(scope, condition);
+                    this.MergeLists(ref found, descendants);
+                }
             }
+
+            return found;
         }
 
         /// <summary>
@@ -600,7 +599,7 @@ namespace HeadlessWindowsAutomation
         /// <returns>The found <see cref="AutomationElementWrapper"/>s as children of the current instance.</returns>
         public List<AutomationElementWrapper> FindElements(AutomationProperty property, object value, TreeScope scope = TreeScope.Children)
         {
-            Condition condition = new PropertyCondition(property, value);
+            ICustomCondition condition = this.CreateCustomPropertyCondition(property, value);
             List<AutomationElement> found = null;
             if (this.Config.FindWaitForElement) found = this.RetryFindElement(() => {
                 var _found = this.FindAllWithHidden(this.Element, scope, condition);
@@ -631,14 +630,14 @@ namespace HeadlessWindowsAutomation
             if (propertyConditions.Count <= 0) throw new ArgumentException("Invalid condition.", nameof(propertyConditions));
             if (propertyConditions.Count == 1) return this.FindElements(propertyConditions.First().Key, propertyConditions.First().Value, scope);
 
-            List<Condition> conditions = new List<Condition>();
+            List<ICustomCondition> conditions = new List<ICustomCondition>();
 
             foreach (var propertyCondition in propertyConditions)
             {
-                conditions.Add(new PropertyCondition(propertyCondition.Key, propertyCondition.Value));
+                conditions.Add(this.CreateCustomPropertyCondition(propertyCondition.Key, propertyCondition.Value));
             }
 
-            Condition combinedCondition = new AndCondition(conditions.ToArray());
+            var combinedCondition = new CustomAndCondition(conditions.ToArray());
             List<AutomationElement> found = null;
             if (this.Config.FindWaitForElement) found = this.RetryFindElement(() => {
                 var _found = this.FindAllWithHidden(this.Element, scope, combinedCondition);
@@ -840,7 +839,7 @@ namespace HeadlessWindowsAutomation
         public void PrintAllChildren()
         {
             Console.WriteLine($"Children of {this}");
-            var found = this.FindAllWithHidden(this.Element, TreeScope.Children, Condition.TrueCondition);
+            var found = this.FindAllWithHidden(this.Element, TreeScope.Children, CustomBoolCondition.TrueCondition);
             if (found.Count == 0) Console.WriteLine("> No children found");
             else
             {
@@ -855,7 +854,7 @@ namespace HeadlessWindowsAutomation
         public void PrintAllDescendants()
         {
             Console.WriteLine($"Descendants of {this}");
-            var found = this.FindAllWithHidden(this.Element, TreeScope.Descendants, Condition.TrueCondition);
+            var found = this.FindAllWithHidden(this.Element, TreeScope.Descendants, CustomBoolCondition.TrueCondition);
             if (found.Count == 0) Console.WriteLine("> No descendants found");
             else
             {
@@ -869,7 +868,7 @@ namespace HeadlessWindowsAutomation
         /// <param name="dest">The result list to merge into.</param>
         /// <param name="source">The collection to merge from.</param>
         /// <returns>The result list.</returns>
-        private List<AutomationElement> MergeLists(ref List<AutomationElement> dest, AutomationElementCollection source)
+        private List<AutomationElement> MergeLists(ref List<AutomationElement> dest, List<AutomationElement> source)
         {
             foreach (AutomationElement element in source)
             {
@@ -1481,6 +1480,11 @@ namespace HeadlessWindowsAutomation
         public bool SearchInAllTopWindows { get; set; } = false;
 
         /// <summary>
+        /// Gets or sets a value indicating whether to check for value as Regex inside the conditions.
+        /// </summary>
+        public bool UseRegex { get; set; } = false;
+
+        /// <summary>
         /// Copies the configuration settings from another <see cref="Config"/> instance.
         /// </summary>
         /// <param name="other">The other <see cref="Config"/> instance to copy from.</param>
@@ -1491,6 +1495,7 @@ namespace HeadlessWindowsAutomation
             this.WaitTimeoutMS = other.WaitTimeoutMS;
             this.ForceChildrenWindows = other.ForceChildrenWindows;
             this.SearchInAllTopWindows = other.SearchInAllTopWindows;
+            this.UseRegex = other.UseRegex;
         }
 
         /// <summary>
@@ -1505,7 +1510,8 @@ namespace HeadlessWindowsAutomation
                 FindWaitForElement = this.FindWaitForElement,
                 WaitTimeoutMS = this.WaitTimeoutMS,
                 ForceChildrenWindows = this.ForceChildrenWindows,
-                SearchInAllTopWindows = this.SearchInAllTopWindows
+                SearchInAllTopWindows = this.SearchInAllTopWindows,
+                UseRegex = this.UseRegex,
             };
         }
     }
