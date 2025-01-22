@@ -10,6 +10,9 @@ list(APPEND SOURCES ${CMAKE_CURRENT_BINARY_DIR}/AssemblyInfo.cs)
 # Add the library target
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
+# Enable XML documentation file generation
+set_property(TARGET ${PROJECT_NAME} PROPERTY VS_GLOBAL_GenerateDocumentationFile "true")
+
 # Set the properties for the library
 set_target_properties(${PROJECT_NAME} PROPERTIES
     OUTPUT_NAME "HeadlessWindowsAutomation"
@@ -17,6 +20,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_PATH}
     ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_PATH}
     VS_DOTNET_TARGET_FRAMEWORK_VERSION ${DOTNET_VERSION}
+    VS_GLOBAL_DocumentationFile "${OUTPUT_PATH}/${PROJECT_NAME}.xml"
 )
 
 # Add references to necessary assemblies
