@@ -27,6 +27,7 @@
   <files>
     <file src="@LIB_PATH@/@NUGET_PACKAGE_NAME@.dll" target="lib/@DOTNET_TARGET_FRAMEWORK@" />
     <file src="@LIB_PATH@/@NUGET_PACKAGE_NAME@.pdb" target="lib/@DOTNET_TARGET_FRAMEWORK@" />
+    <file src="@LIB_PATH@/@NUGET_PACKAGE_NAME@.xml" target="lib/@DOTNET_TARGET_FRAMEWORK@" />
     <file src="@SOURCE_PATH@/readme.md" target="docs" />
   </files>
 </package>
