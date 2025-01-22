@@ -42,6 +42,11 @@ namespace HeadlessWindowsAutomation
         public AutomationElementWrapper RootWindow { get; set; }
 
         /// <summary>
+        /// The CacheRequest used to cache specific properties of AutomationElements.
+        /// </summary>
+        private CacheRequest _cacheRequest;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="AutomationElementWrapper"/> class with the specified <see cref="AutomationElement"/>.  
         /// The <see cref="AutomationElementWrapper.RootWindow" /> is the new instance.
         /// </summary>
@@ -151,7 +156,6 @@ namespace HeadlessWindowsAutomation
         /// <summary>
         /// Posts a Windows message to the current window handle.
         /// </summary>
-        /// <param name="hwnd">The window handle.</param>
         /// <param name="msg">The message to post.</param>
         /// <param name="wParam">The WPARAM value.</param>
         /// <param name="lParam">The LPARAM value.</param>
@@ -671,10 +675,25 @@ namespace HeadlessWindowsAutomation
             return this.FindElements(propertyConditions, scope);
         }
 
+        // <summary>
+        /// Initializes and activates a CacheRequest to cache specific properties of AutomationElements.
+        /// </summary>
+        /// <returns>An IDisposable object that deactivates the CacheRequest when disposed.</returns>
+        private IDisposable StartCache()
+        {
+            // Initialize and activate the CacheRequest
+            this._cacheRequest = new CacheRequest();
+            this._cacheRequest.Add(AutomationElement.NameProperty);
+            this._cacheRequest.Add(AutomationElement.ControlTypeProperty);
+            this._cacheRequest.Add(AutomationElement.AutomationIdProperty);
+            this._cacheRequest.TreeScope = TreeScope.Element | TreeScope.Children;
+            return this._cacheRequest.Activate();
+        }
+
         /// <summary>
         /// Finds the first element that matches the specified XPath expression.
         /// </summary>
-        /// <param name="xpath">XPath expression to find the element.</param>
+        /// <param name="xpathExpr">XPath expression to find the element.</param>
         /// <returns>The found <see cref="AutomationElementWrapper"/>. All required instances will be created according to the path.</returns>
         public AutomationElementWrapper FindElementByXPath(string xpathExpr)
         {
@@ -710,13 +729,19 @@ namespace HeadlessWindowsAutomation
             AutomationElementWrapper result = null;
             if (this.Config.FindWaitForElement) result = this.RetryFindElement(() =>
             {
-                if (this.Config.SearchInAllTopWindows) return this.ExecuteFindFromTopLevels(nodes);
-                else return FindElementByXPathRecursive(startingElement, nodes, 0);
+                using (this.StartCache())
+                {
+                    if (this.Config.SearchInAllTopWindows) return this.ExecuteFindFromTopLevels(nodes);
+                    else return FindElementByXPathRecursive(startingElement, nodes, 0);
+                }
             });
             else 
             {
-                if (this.Config.SearchInAllTopWindows) result = this.ExecuteFindFromTopLevels(nodes);
-                else result = FindElementByXPathRecursive(startingElement, nodes, 0);
+                using (this.StartCache())
+                {
+                    if (this.Config.SearchInAllTopWindows) result = this.ExecuteFindFromTopLevels(nodes);
+                    else result = FindElementByXPathRecursive(startingElement, nodes, 0);
+                }
             }
 
             if (result == null && this.Config.ShowError) Console.Error.WriteLine($"Element not found using expression {xpathExpr} inside {this}");
@@ -1073,38 +1098,42 @@ namespace HeadlessWindowsAutomation
         {
             AutomationElementWrapper Aux()
             {
-                AutomationElementWrapper found = null;
-                WindowsAPIHelper.VisitTopWindows((AutomationElement element) => {
-                    AutomationElementWrapper wrapper = new AutomationElementWrapper(element);
-                    wrapper.Config.CopyFrom(this.Config);
-                    wrapper.Config.ShowError = false;
-                    wrapper.Config.FindWaitForElement = false;
-
-                    var rootMatches = wrapper.FindElement(rootCondition, TreeScope.Element);  // Check self
-                    if (rootMatches != null)
+                using (this.StartCache())
+                {
+                    AutomationElementWrapper found = null;
+                    WindowsAPIHelper.VisitTopWindows((AutomationElement element) =>
                     {
-                        // We've found a matching top level owned window
-                        if (String.IsNullOrEmpty(subExpr))
+                        AutomationElementWrapper wrapper = new AutomationElementWrapper(element);
+                        wrapper.Config.CopyFrom(this.Config);
+                        wrapper.Config.ShowError = false;
+                        wrapper.Config.FindWaitForElement = false;
+
+                        var rootMatches = wrapper.FindElement(rootCondition, TreeScope.Element);  // Check self
+                        if (rootMatches != null)
                         {
-                            wrapper.Config.CopyFrom(this.Config);
-                            found = wrapper;
-                            return false;
-                        }
-                        else
-                        {
-                            // Check for sub element with xpath
-                            var subElement = wrapper.FindElementByXPath(subExpr);
-                            if (subElement != null)
+                            // We've found a matching top level owned window
+                            if (String.IsNullOrEmpty(subExpr))
                             {
-                                subElement.Config.CopyFrom(this.Config);
-                                found = subElement;
+                                wrapper.Config.CopyFrom(this.Config);
+                                found = wrapper;
                                 return false;
                             }
+                            else
+                            {
+                                // Check for sub element with xpath
+                                var subElement = wrapper.FindElementByXPath(subExpr);
+                                if (subElement != null)
+                                {
+                                    subElement.Config.CopyFrom(this.Config);
+                                    found = subElement;
+                                    return false;
+                                }
+                            }
                         }
-                    }
-                    return true;
-                });
-                return found;
+                        return true;
+                    });
+                    return found;
+                }
             }
 
             AutomationElementWrapper result = null;
@@ -1367,7 +1396,7 @@ namespace HeadlessWindowsAutomation
         /// <summary>
         /// Holds a key.
         /// </summary>
-        /// <param name="keyCode">Virtual key code to hold.param>
+        /// <param name="keyCode">Virtual key code to hold.</param>
         /// <param name="options"><see cref="Options"/> options.</param>
         /// <returns>The associated <see cref="AutomationElementWrapper"/>.</returns>
         public AutomationElementWrapper HoldKey(Keys keyCode, Options options = null)
@@ -1386,7 +1415,7 @@ namespace HeadlessWindowsAutomation
         /// <summary>
         /// Releases a key.
         /// </summary>
-        /// <param name="keyCode">Virtual key code to hold.param>
+        /// <param name="keyCode">Virtual key code to hold.</param>
         /// <param name="options"><see cref="Options"/> options.</param>
         /// <returns>The associated <see cref="AutomationElementWrapper"/>.</returns>
         public AutomationElementWrapper ReleaseKey(Keys keyCode, Options options = null)
