@@ -729,6 +729,7 @@ namespace HeadlessWindowsAutomation
 
             WindowsAPIHelper.VisitTopWindows((AutomationElement element) => {
                 AutomationElementWrapper wrapper = new AutomationElementWrapper(element);
+                wrapper.Config.CopyFrom(this.Config);
                 found = this.FindElementByXPathRecursive(wrapper, nodes, 0);
                 return found == null;
             });
@@ -1075,6 +1076,7 @@ namespace HeadlessWindowsAutomation
                 AutomationElementWrapper found = null;
                 WindowsAPIHelper.VisitTopWindows((AutomationElement element) => {
                     AutomationElementWrapper wrapper = new AutomationElementWrapper(element);
+                    wrapper.Config.CopyFrom(this.Config);
                     wrapper.Config.ShowError = false;
                     wrapper.Config.FindWaitForElement = false;
 
@@ -1129,6 +1131,7 @@ namespace HeadlessWindowsAutomation
                 WindowsAPIHelper.VisitTopWindows((element) =>
                 {
                     var wrapper = new AutomationElementWrapper(element);
+                    wrapper.Config.CopyFrom(config);
                     wrapper.Config.ShowError = false;
                     wrapper.Config.FindWaitForElement = false;
                     var found = wrapper.FindElement(condition, TreeScope.Element);
