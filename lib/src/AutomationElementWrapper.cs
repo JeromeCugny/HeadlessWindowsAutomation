@@ -1096,6 +1096,7 @@ namespace HeadlessWindowsAutomation
         /// <returns>An <see cref="AutomationElementWrapper"/> for the owned element if found; otherwise, null.</returns>
         public AutomationElementWrapper FindOwnedElement(string rootCondition, string subExpr = "")
         {
+            var currentHwnd = this.GetHwnd();
             AutomationElementWrapper Aux()
             {
                 using (this.StartCache())
@@ -1107,6 +1108,12 @@ namespace HeadlessWindowsAutomation
                         wrapper.Config.CopyFrom(this.Config);
                         wrapper.Config.ShowError = false;
                         wrapper.Config.FindWaitForElement = false;
+
+                        // Check ownership
+                        var topHwnd = wrapper.GetHwnd();
+                        var topWindow = new HeadlessWindowsAutomation.Window(topHwnd);
+                        var ownerHwnd = topWindow.GetOwnerWindowHandle();
+                        if (!currentHwnd.Equals(ownerHwnd)) return true;
 
                         var rootMatches = wrapper.FindElement(rootCondition, TreeScope.Element);  // Check self
                         if (rootMatches != null)
