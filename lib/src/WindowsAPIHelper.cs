@@ -147,10 +147,15 @@ namespace HeadlessWindowsAutomation
         {
             EnumChildWindows(hWndParent, (hWnd, lParam) =>
             {
-                if (!immediateChild || GetParent(hWnd) == hWndParent)
+                try
                 {
                     AutomationElement element = WindowsAPIHelper.GetAutomationElement(hWnd);
                     if (element != null) return visitor(element);
+                }
+                catch (Exception ex)
+                {
+                    // Can return non-usable handle due to permission
+                    Console.Error.WriteLine($"Exception in VisitWindows: {ex.Message}");
                 }
                 return true; // Continue enumeration
             }, IntPtr.Zero);
@@ -164,9 +169,17 @@ namespace HeadlessWindowsAutomation
         {
             EnumWindows((hWnd, lParam) =>
             {
-                AutomationElement element = WindowsAPIHelper.GetAutomationElement(hWnd);
-                if (element != null) return visitor(element);
-                else return true; // Continue enumeration
+                try
+                {
+                    AutomationElement element = WindowsAPIHelper.GetAutomationElement(hWnd);
+                    if (element != null) return visitor(element);
+                }
+                catch (Exception ex)
+                {
+                    // Can return non-usable handle due to permission
+                    Console.Error.WriteLine($"Exception in VisitTopWindows: {ex.Message}");
+                }
+                return true; // Continue enumeration
             }, IntPtr.Zero);
         }
 
